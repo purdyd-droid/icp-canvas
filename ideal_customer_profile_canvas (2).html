@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ideal Customer Profile (ICP) Canvas</title>
+  <!-- Tailwind CSS CDN for utility extension -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+    :root {
+      --brand-navy: #000f36;
+      --brand-navy-light: #081d54;
+      --brand-green: #1E7C01;
+      --brand-green-hover: #269b02;
+      --canvas-bg: #f8fafc;
+      --card-border: #cbd5e1;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #0b1120;
+      color: #0f172a;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    ::-webkit-scrollbar {
+      width: 7px;
+      height: 7px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+
+    .canvas-viewport-container {
+      width: 100%;
+      overflow-x: auto;
+      overflow-y: visible;
+      display: flex;
+      justify-content: flex-start;
+      padding: 12px;
+      background-color: #0b1120;
+    }
+
+    .canvas-board {
+      min-width: 1380px;
+      width: 1380px;
+      background-color: #f8fafc;
+      border-radius: 16px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      border: 1px solid #1e293b;
+      margin: 0 auto;
+      transition: transform 0.2s ease, width 0.2s ease;
+      transform-origin: top center;
+    }
+
+    /* Stacked view mode for small screens if toggled */
+    .canvas-board.stacked-mode {
+      min-width: 100% !important;
+      width: 100% !important;
+    }
+
+    .canvas-board.stacked-mode .canvas-grid-body {
+      grid-template-columns: 1fr !important;
+    }
+
+    .canvas-grid-body {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 12px;
+      padding: 14px;
+      background-color: #f1f5f9;
+    }
+
+    .canvas-card {
+      background: #ffffff;
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .canvas-card:focus-within {
+      border-color: var(--brand-green);
+      box-shadow: 0 0 0 2px rgba(30, 124, 1, 0.18);
+    }
+
+    .canvas-input {
+      width: 100%;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      padding: 6px 8px;
+      font-size: 0.775rem;
+      line-height: 1.4;
+      color: #1e293b;
+      resize: vertical;
+      min-height: 60px;
+      font-family: inherit;
+      transition: all 0.15s ease;
+    }
+
+    .canvas-input:hover:not(:focus) {
+      background-color: #f8fafc;
+      border-color: #e2e8f0;
+    }
+
+    .canvas-input:focus {
+      background-color: #ffffff;
+      outline: none;
+      border-color: var(--brand-green);
+      box-shadow: 0 0 0 2px rgba(30, 124, 1, 0.2);
+    }
+
+    .header-input {
+      background: rgba(255, 255, 255, 0.09);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 6px;
+      color: #ffffff;
+      padding: 5px 8px;
+      font-size: 0.785rem;
+      width: 100%;
+      font-family: inherit;
+    }
+
+    .header-input:focus {
+      outline: none;
+      background: rgba(255, 255, 255, 0.16);
+      border-color: #4ade80;
+      box-shadow: 0 0 0 2px rgba(74, 222, 128, 0.25);
+    }
+
+    .guide-tip {
+      font-size: 0.7rem;
+      line-height: 1.35;
+      color: #475569;
+      background-color: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 5px;
+      padding: 6px 8px;
+      margin-bottom: 8px;
+    }
+
+    @media print {
+      body {
+        background: #ffffff !important;
+        padding: 0 !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .canvas-viewport-container {
+        padding: 0 !important;
+        background: #ffffff !important;
+        overflow: visible !important;
+      }
+      .canvas-board {
+        min-width: 100% !important;
+        width: 100% !important;
+        box-shadow: none !important;
+        border: 1px solid #94a3b8 !important;
+        transform: scale(1) !important;
+      }
+      .canvas-grid-body {
+        grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+        gap: 6px !important;
+        padding: 8px !important;
+      }
+      .canvas-card {
+        box-shadow: none !important;
+        border-color: #94a3b8 !important;
+        page-break-inside: avoid;
+        padding: 8px !important;
+      }
+      .canvas-input {
+        resize: none;
+        padding: 2px !important;
+        min-height: 45px !important;
+      }
+      @page {
+        size: landscape;
+        margin: 0.4cm;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <aside class="no-print bg-[#000f36] border-b border-slate-700/80 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs text-white">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-lg bg-[#1E7C01] flex items-center justify-center font-extrabold text-sm shadow">
+        ICP
+      </div>
+      <div>
+        <div class="font-bold tracking-wide uppercase text-slate-100 flex items-center gap-2">
+          Canvas Display Mode
+          <span id="scaleLabel" class="bg-slate-800 text-emerald-400 text-[10px] font-mono px-1.5 py-0.5 rounded border border-slate-700">100%</span>
+        </div>
+        <div class="text-[11px] text-slate-400">Use Zoom or Fit to adapt the 5-column layout to your current window width.</div>
+      </div>
+    </div>
+
+    <!-- Zoom and Mode Controls -->
+    <div class="flex items-center gap-1.5 bg-slate-900/90 p-1 rounded-lg border border-slate-700">
+      <button id="zoomOutBtn" title="Zoom Out" class="px-2.5 py-1 rounded hover:bg-slate-800 text-slate-300 font-bold transition">－</button>
+      <button id="resetZoomBtn" title="Reset Zoom to 100%" class="px-2.5 py-1 rounded hover:bg-slate-800 text-slate-300 transition">100%</button>
+      <button id="zoomInBtn" title="Zoom In" class="px-2.5 py-1 rounded hover:bg-slate-800 text-slate-300 font-bold transition">＋</button>
+      <button id="fitWidthBtn" title="Fit Canvas to Preview Width" class="px-3 py-1 rounded bg-[#1E7C01] hover:bg-[#269b02] text-white font-semibold transition flex items-center gap-1">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+        Fit Preview
+      </button>
+      <button id="toggleLayoutModeBtn" class="px-2.5 py-1 rounded hover:bg-slate-800 text-slate-300 transition flex items-center gap-1">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18M15 3v18"/></svg>
+        <span id="layoutModeText">Stacked View</span>
+      </button>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex items-center gap-2">
+      <button id="loadSampleBtn" class="flex items-center gap-1 px-3 py-1.5 rounded-md bg-white/10 hover:bg-white/20 text-white font-semibold transition border border-white/15">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2.5"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></svg>
+        Load Example
+      </button>
+      <button id="toggleGuidesBtn" class="flex items-center gap-1 px-3 py-1.5 rounded-md bg-white/10 hover:bg-white/20 text-white font-semibold transition border border-white/15">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#93c5fd" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+        <span id="guideToggleText">Hide Tips</span>
+      </button>
+      <button id="clearBtn" class="flex items-center gap-1 px-3 py-1.5 rounded-md bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 font-semibold transition border border-rose-500/30">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        Clear
+      </button>
+      <button id="exportMdBtn" class="flex items-center gap-1 px-3 py-1.5 rounded-md bg-white/10 hover:bg-white/20 text-white font-semibold transition border border-white/15">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+        Export Markdown
+      </button>
+      <button onclick="window.print()" class="flex items-center gap-1 px-3.5 py-1.5 rounded-md bg-[#1E7C01] hover:bg-[#269b02] text-white font-bold transition shadow">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
+        Print / PDF
+      </button>
+    </div>
+  </aside>
+
+  <div class="canvas-viewport-container" id="viewportContainer">
+    <div class="canvas-board" id="canvasBoard">
+
+      <!-- Header Banner with Brand Colors -->
+      <header class="bg-[#000f36] text-white px-6 py-4 border-b-4 border-[#1E7C01] rounded-t-2xl shadow">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-[#1E7C01] flex items-center justify-center font-black text-white text-lg tracking-wider shadow">
+              ICP
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h1 class="text-xl font-extrabold tracking-tight">IDEAL CUSTOMER PROFILE CANVAS</h1>
+                <span class="bg-[#1E7C01]/30 text-emerald-300 border border-[#1E7C01]/50 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
+                  5-Pillar Strategic Grid
+                </span>
+              </div>
+              <p class="text-xs text-slate-300">A visual framework to diagnose psychology, buying behavior, content diets, and market activation.</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 text-xs text-slate-300">
+            <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span id="saveStatus">Auto-saving locally</span>
+          </div>
+        </div>
+
+        <!-- Metadata Strip -->
+        <div class="mt-4 pt-3 border-t border-white/15 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 text-xs">
+          <div>
+            <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Persona Name / Moniker</label>
+            <input type="text" id="meta_persona_name" class="header-input" placeholder="e.g. Scaling RevOps Lead" />
+          </div>
+          <div>
+            <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Product / Solution Tier</label>
+            <input type="text" id="meta_product_tier" class="header-input" placeholder="e.g. Growth B2B Tier" />
+          </div>
+          <div>
+            <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Target Market / Archetype</label>
+            <input type="text" id="meta_market_archetype" class="header-input" placeholder="e.g. Mid-Market SaaS" />
+          </div>
+          <div>
+            <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Document Owner / Team</label>
+            <input type="text" id="meta_owner" class="header-input" placeholder="e.g. Marketing & Sales" />
+          </div>
+          <div>
+            <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Validation Status</label>
+            <select id="meta_status" class="header-input bg-slate-900 text-white">
+              <option value="Hypothesis (Draft)">Hypothesis (Draft)</option>
+              <option value="Customer Validating">Customer Validating</option>
+              <option value="Field Tested & Approved">Field Tested & Approved</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Last Updated</label>
+            <input type="date" id="meta_date" class="header-input" />
+          </div>
+        </div>
+      </header>
+
+      <main class="canvas-grid-body">
+        
+        <!-- COLUMN 1: IDENTITY & PROFILE -->
+        <div class="flex flex-col gap-3">
+          <div class="flex items-center gap-2 px-1 text-xs font-bold uppercase tracking-wider text-[#000f36]">
+            <span class="w-2.5 h-2.5 rounded-full bg-[#000f36]"></span>
+            1. Identity & Profile
+          </div>
+
+          <!-- 1. Demographics -->
+          <div class="canvas-card flex-1">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs font-bold text-[#000f36] uppercase">Demographics</span>
+              <span class="text-[10px] text-slate-400 font-mono font-bold">01</span>
+            </div>
+            <div class="guide-tip">
+              <strong>What it is:</strong> Baseline statistical traits: age bracket, gender skew, education, income, and geography.
+            </div>
+            <textarea id="cell_demographics" class="canvas-input flex-grow" placeholder="Age: 32–46&#10;Geography: Tier-1 Metro / Remote&#10;Income: $120k–$175k&#10;Education: BA/BS+ Business/Tech"></textarea>
+          </div>
+
+          <!-- 2. Professional Background -->
+          <div class="canvas-card flex-1">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs font-bold text-[#000f36] uppercase">Professional Background</span>
+              <span class="text-[10px] text-slate-400 font-mono font-bold">02</span>
+            </div>
+            <div class="guide-tip">
+              <strong>What it is:</strong> Typical job titles, career trajectory, industry vertical, and company scale (or life stage for B2C).
+            </div>
+            <textarea id="cell_prof_background" class="canvas-input flex-grow" placeholder="Titles: VP RevOps, Director Ops&#10;Trajectory: 8+ yrs in tech, ex-analyst&#10;Company: 75–300 FTEs, B2B SaaS"></textarea>
+          </div>
+
+          <!-- 3. Responsibilities & Tech Savvy -->
+          <div class="canvas-card flex-1">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs font-bold text-[#000f36] uppercase">Responsibilities & Stack</span>
+              <span class="text-[10px] text-slate-400 font-mono font-bold">03</span>
+            </div>
+            <div class="guide-tip">
+              <strong>What it is:</strong> Daily KPIs, tech fluency score (1–5 scale), and primary software stack they rely on daily.
+            </div>
+            <textarea id="cell_resp_tech" class="canvas-input flex-grow" placeholder="KPIs: Pipeline accuracy, tool ROI&#10;Tech Fluency: 4.5 / 5.0&#10;Daily Stack: Salesforce, Slack, Notion, Excel"></textarea>
+          </div>
+
+          <!-- 4. LinkedIn Bio Keywords -->
+          <div class="canvas-card flex-1">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs font-bold text-[#000f36] uppercase">LinkedIn Bio Keywords</span>
+              <span class="text-[10px] text-slate-400 font-mono font-bold">04</span>
+            </div>
+            <div class="guide-tip">
+              <strong>What it is:</strong> Explicit phrasing, certifications, and industry shorthand shown on their profiles.
+            </div>
+            <textarea id="cell_linkedin_keywords" class="canvas-input flex-grow" placeholder="&quot;Scalable Architecture&quot;, &quot;GTM Strategy&quot;, &quot;Revenue Operations&quot;, PMP, Salesforce Certified"></textarea>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-3">
+          <div class="flex items-center gap-2 px-1 text-xs font-bold uppercase tracking-wider text-[#1E7C01]">
+            <span class="w-2.5 h-2.5 rounded-full bg-[#1E7C01]"></span>
+            2. Psychology & Drivers
+          </div>
+
+          <!-- 5. Values and Mindset -->
+          <div class="canvas-card flex-1">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs font-bold text-[#000f36] uppercase">Values & Mindset</span>
+              <span class="text-[10px] text-slate-400 font-mono font-bold">05</span>
+            </div>
+            <div class="guide-tip">
+              <strong>What it is:</strong> Worldview, operating ethics, risk appetite, and the underlying beliefs governing choices.
+            </div>
+            <textarea id="cell_values_mindset" class="canvas-input flex-grow" placeholder="• Pragmatic & data-first; despises vanity metrics&#10;• Values predictability and autonomy&#10;• Moderate risk tolerance: tests before buying"></textarea>
+          </div>
+
+          <!-- 6. Pain Points -->
+          <div class="canvas-card flex-1 border-rose-300 bg-rose-50/20">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs font-bold text-rose-900 uppercase">Pain Points & Friction</span>
+              <span class="text-[10px] text-rose-500 font-mono font-bold">06</span>
+            </div>
+            <div class="guide-tip">
+              <strong>What it is:</strong> Daily bottlenecks, emotional stressors, and existential fears if the status quo continues.
+            </div>
+            <textarea id="cell_pain_points" class="canvas-input flex-grow" placeholder="• 10+ hrs/wk manually synchronizing disconnected databases&#10;• Executive leadership complains reports are stale&#10;• Fear: Bad forecast leading to budget freezes"></textarea>
+          </div>
+
+          <!-- 7. Goals & Desired Gains -->
+          <div class="canvas-card flex-1 border-emerald-300 bg-emerald-50/20">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs font-bold text-emerald-950 uppercase">Goals & Desired State</span>
+              <span class="text-[10px] text-emerald-600 font-mono font-bold">07</span>
+            </div>
+            <div class="guide-tip">
+              <strong>What it is:</strong> Measurable wins, operational relief, career elevation, and what a "dream outcome" looks like.
+            </div>
+            <textarea id="cell_goals" class="canvas-input flex-grow" placeholder="• Real-time unified data pipeline across all CRM tools&#10;• Cut operational sync meetings by 50%&#10;• Look like an innovative strategic partner to CEO"></textarea>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-3">
+          <div class="flex items-center gap-2 px-1 text-xs font-bold uppercase tracking-wider text-[#000f36]">
+            <span class="w-2.5 h-2.5 rounded-full bg-[#000f36]"></span>
+            3. Voice & Resonance
+          </div>
+
+          <!-- 8. In Their Words -->
+          <div class="canvas-card flex-1 border-2 border-[#000f36]/25 bg-slate-50">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs font-bold text-[#000f36] uppercase">In Their Words (VOC)</span>
+              <span class="text-[10px] text-[#000f36] font-mono font-bold">08</span>
+            </div>
+            <div class="guide-tip">
+              <strong>What it is:</strong> Verbatim quotes, raw complaints, and colloquial phrasing pulled directly from interviews or calls.
+            </div>
+            <textarea id="cell_in_their_words" class="canvas-input flex-grow font-serif italic text-slate-800" placeholder="&quot;I'm basically a human Zapier pasting CSV files between systems all day.&quot;&#10;&#10;&quot;Every vendor says their tool is seamless until our team spends 4 months configuring it.&quot;"></textarea>
+          </div>
+
+          <!-- 9. Messaging & Resonance -->
+          <div class="canvas-card flex-1 border-2 border-[#1E7C01]/40">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs font-bold text-[#1E7C01] uppercase">Messaging & Resonance</span>
+              <span class="text-[10px] text-[#1E7C01] font-mono font-bold">09</span>
+            </div>
+            <div class="guide-tip">
+              <strong>What it is:</strong> The high-converting tone, core value hook, power phrases, and banned corporate buzzwords.
+            </div>
+            <textarea id="cell_messaging" class="canvas-input flex-grow" placeholder="Tone: Crisp, no-BS, engineer-level precision&#10;&#10;Core Hook: &quot;Automate cross-stack workflows in 20 minutes without asking IT for budget approval.&quot;&#10;&#10;Power Words: Battle-tested, deterministic&#10;Banned Words: Synergistic, magical"></textarea>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-3">
+          <div class="flex items-center gap-2 px-1 text-xs font-bold uppercase tracking-wider text-[#1E7C01]">
+            <span class="w-2.5 h-2.5 rounded-full bg-[#1E7C01]"></span>
+            4. Buying Mechanics
+          </div>
+
+          <!-- 10. Buying Behavior -->
+          <div class="canvas-card flex-1">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs font-bold text-[#000f36] uppercase">Buying Behavior</span>
+              <span class="text-[10px] text-slate-400 font-mono font-bold">10</span>
+            </div>
+            <div class="guide-tip">
+              <strong>What it is:</strong> Catalysts/triggers that prompt search, top objections, and non-negotiable decision criteria.
+            </div>
+            <textarea id="cell_buying_behavior" class="canvas-input flex-grow" placeholder="Triggers: Rapid team scaling, migration disaster, Q4 budget flush&#10;&#10;Top Objections: &quot;Will my team adopt this?&quot; / &quot;Is migration risky?&quot;&#10;&#10;Decision Criteria: 1. Setup speed  2. SOC-2  3. Transparent pricing"></textarea>
+          </div>
+
+          <!-- 11. Common User Journey -->
+          <div class="canvas-card flex-1">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs font-bold text-[#000f36] uppercase">Common User Journey</span>
+              <span class="text-[10px] text-slate-400 font-mono font-bold">11</span>
+            </div>
+            <div class="guide-tip">
+              <strong>What it is:</strong> Sequential path from problem awareness, to research, sandbox test, purchase, and retention.
+            </div>
+            <textarea id="cell_user_journey" class="canvas-input flex-grow" placeholder="1. Discover: Peer recommendation in Slack&#10;2. Research: G2 reviews, transparent pricing page&#10;3. Validate: Free sandbox trial&#10;4. Expand: Adds 3 teammates within 14 days"></textarea>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-3">
+          <div class="flex items-center gap-2 px-1 text-xs font-bold uppercase tracking-wider text-[#000f36]">
+            <span class="w-2.5 h-2.5 rounded-full bg-[#000f36]"></span>
+            5. Media & Channels
+          </div>
+
+          <!-- 12. Platform Behavior -->
+          <div class="canvas-card flex-1">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs font-bold text-[#000f36] uppercase">Platform Behavior</span>
+              <span class="text-[10px] text-slate-400 font-mono font-bold">12</span>
+            </div>
+            <div class="guide-tip">
+              <strong>What it is:</strong> Primary daily social apps, utility networks, and generative AI environments they access.
+            </div>
+            <textarea id="cell_platform_behavior" class="canvas-input flex-grow" placeholder="Daily: LinkedIn (active), Claude & Perplexity (daily work), Reddit (r/revops)&#10;Zero Presence: TikTok, Facebook"></textarea>
+          </div>
+
+          <!-- 13. Search Behavior & AI Prompts -->
+          <div class="canvas-card flex-1">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs font-bold text-[#000f36] uppercase">Search & AI Prompts</span>
+              <span class="text-[10px] text-slate-400 font-mono font-bold">13</span>
+            </div>
+            <div class="guide-tip">
+              <strong>What it is:</strong> Exact search queries, comparisons, and prompts typed into Google, ChatGPT, or Perplexity.
+            </div>
+            <textarea id="cell_search_behavior" class="canvas-input flex-grow" placeholder="Queries: &quot;How to sync Salesforce with Postgres without ETL&quot;&#10;AI Prompts: &quot;Compare tool X vs tool Y for SOC2 compliance and price&quot;"></textarea>
+          </div>
+
+          <!-- 14. Media Habits -->
+          <div class="canvas-card flex-1">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs font-bold text-[#000f36] uppercase">Media Habits</span>
+              <span class="text-[10px] text-slate-400 font-mono font-bold">14</span>
+            </div>
+            <div class="guide-tip">
+              <strong>What it is:</strong> Niche podcasts, industry publications, YouTube creators, and subreddits they read.
+            </div>
+            <textarea id="cell_media_habits" class="canvas-input flex-grow" placeholder="Podcasts: Lenny's Podcast, 20VC&#10;Newsletters: TLDR, Stratechery&#10;Communities: Pavilion, RevOps Co-op Slack"></textarea>
+          </div>
+
+          <!-- 15. Brands & Content Formats -->
+          <div class="canvas-card flex-1">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs font-bold text-[#000f36] uppercase">Brands & Content Formats</span>
+              <span class="text-[10px] text-slate-400 font-mono font-bold">15</span>
+            </div>
+            <div class="guide-tip">
+              <strong>What it is:</strong> Respected benchmark brands and winning content formats (interactive tools vs. generic ebooks).
+            </div>
+            <textarea id="cell_brands_content" class="canvas-input flex-grow" placeholder="Brands Admired: Stripe, Linear, Apple&#10;Winning Content: Interactive ROI calculators, architecture teardowns&#10;Avoids: 40-page gated ebooks"></textarea>
+          </div>
+        </div>
+
+      </main>
+
+      <footer class="p-3.5 bg-white border-t-2 border-slate-200 grid grid-cols-1 lg:grid-cols-3 gap-3 rounded-b-2xl">
+        
+        <!-- 16. How to Reach / Activation Blueprint -->
+        <div class="lg:col-span-2 canvas-card bg-slate-50 border-slate-300">
+          <div class="flex items-center justify-between mb-1.5">
+            <div class="flex items-center gap-2">
+              <span class="w-5 h-5 rounded bg-[#1E7C01] text-white flex items-center justify-center font-bold text-[11px]">16</span>
+              <h2 class="text-xs font-bold text-[#000f36] uppercase tracking-wide">
+                How To Reach — Activation Campaign Blueprint
+              </h2>
+            </div>
+            <span class="text-[11px] font-bold text-[#1E7C01]">Go-To-Market Execution</span>
+          </div>
+          <div class="guide-tip">
+            <strong>What it is:</strong> Concrete, multi-touch campaign plays matched directly to this persona's daily workflow and trusted media.
+          </div>
+          <textarea id="cell_how_to_reach" class="canvas-input flex-grow min-h-[65px]" placeholder="• Play 1 (High Intent): Competitor alternative landing page + ungated migration calculator.&#10;• Play 2 (Community): Sponsor leading niche newsletters with a downloadable workflow audit swipe file.&#10;• Play 3 (Organic Authority): Weekly video teardowns dissecting real-world pipeline failures."></textarea>
+        </div>
+
+        <!-- 1-Liner Executive Alignment Snapshot -->
+        <div class="canvas-card bg-[#000f36] text-white border-[#000f36] justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-xs font-bold uppercase tracking-wide text-white flex items-center gap-1.5">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                Executive Alignment Snapshot
+              </span>
+              <span class="text-[10px] bg-[#1E7C01]/30 text-emerald-300 border border-[#1E7C01]/50 px-2 py-0.5 rounded font-mono">1-Liner</span>
+            </div>
+            <div class="text-[11px] text-slate-300 mb-2 leading-tight">
+              Summarize the core deal-breaker and why this profile chooses you over status quo:
+            </div>
+            <textarea id="cell_exec_snapshot" class="canvas-input text-slate-100 bg-white/10 border-white/20 placeholder-slate-400 focus:bg-white/15 min-h-[65px]" placeholder="&quot;If we show them how to eliminate manual spreadsheet reconciliation in under 30 minutes with zero IT overhead, we win the deal every time.&quot;"></textarea>
+          </div>
+
+          <div class="mt-2 pt-2 border-t border-white/15 flex items-center justify-between text-[10px] text-slate-300">
+            <span>Palette: Primary <code>#000f36</code></span>
+            <span>Secondary <code>#1E7C01</code></span>
+          </div>
+        </div>
+
+      </footer>
+
+    </div>
+  </div>
+
+  <script>
+    const fields = [
+      'meta_persona_name', 'meta_product_tier', 'meta_market_archetype', 'meta_owner', 'meta_status', 'meta_date',
+      'cell_demographics', 'cell_prof_background', 'cell_resp_tech', 'cell_linkedin_keywords',
+      'cell_values_mindset', 'cell_pain_points', 'cell_goals',
+      'cell_in_their_words', 'cell_messaging',
+      'cell_buying_behavior', 'cell_user_journey',
+      'cell_platform_behavior', 'cell_search_behavior', 'cell_media_habits', 'cell_brands_content',
+      'cell_how_to_reach', 'cell_exec_snapshot'
+    ];
+
+    const STORAGE_KEY = 'icp_canvas_data_v2';
+    const board = document.getElementById('canvasBoard');
+    const viewport = document.getElementById('viewportContainer');
+    const scaleLabel = document.getElementById('scaleLabel');
+    let currentScale = 1.0;
+
+    // Apply zoom scaling to the canvas board
+    function setZoom(scale) {
+      currentScale = Math.max(0.4, Math.min(scale, 1.5));
+      if (board.classList.contains('stacked-mode')) {
+        board.style.transform = 'none';
+        scaleLabel.innerText = 'Stacked';
+        return;
+      }
+      board.style.transform = `scale(${currentScale})`;
+      scaleLabel.innerText = `${Math.round(currentScale * 100)}%`;
+      // Adjust bottom spacing caused by scale transform
+      const scaledHeight = board.offsetHeight * currentScale;
+      viewport.style.minHeight = `${scaledHeight + 40}px`;
+    }
+
+    // Automatically fit canvas width to current preview panel width
+    function fitToWidth() {
+      if (board.classList.contains('stacked-mode')) {
+        setZoom(1.0);
+        return;
+      }
+      const availableWidth = viewport.clientWidth - 28;
+      const targetScale = availableWidth / 1380;
+      setZoom(targetScale > 1 ? 1 : Math.max(0.45, targetScale));
+    }
+
+    document.getElementById('zoomInBtn').addEventListener('click', () => setZoom(currentScale + 0.1));
+    document.getElementById('zoomOutBtn').addEventListener('click', () => setZoom(currentScale - 0.1));
+    document.getElementById('resetZoomBtn').addEventListener('click', () => setZoom(1.0));
+    document.getElementById('fitWidthBtn').addEventListener('click', fitToWidth);
+
+    // Toggle between 5-column poster grid and stacked column view
+    const toggleLayoutBtn = document.getElementById('toggleLayoutModeBtn');
+    const layoutModeText = document.getElementById('layoutModeText');
+    toggleLayoutBtn.addEventListener('click', () => {
+      const isStacked = board.classList.toggle('stacked-mode');
+      if (isStacked) {
+        layoutModeText.innerText = 'Poster View';
+        setZoom(1.0);
+      } else {
+        layoutModeText.innerText = 'Stacked View';
+        fitToWidth();
+      }
+    });
+
+    // Window resize listener
+    window.addEventListener('resize', () => {
+      if (!board.classList.contains('stacked-mode') && currentScale !== 1.0) {
+        fitToWidth();
+      }
+    });
+
+    // Auto-save logic with iframe fallback
+    function saveCanvas() {
+      const data = {};
+      fields.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) data[id] = el.value;
+      });
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        const status = document.getElementById('saveStatus');
+        if (status) status.innerText = `Saved ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+      } catch (e) {
+        const status = document.getElementById('saveStatus');
+        if (status) status.innerText = 'Session Active (RAM)';
+      }
+    }
+
+    function loadCanvas() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const data = JSON.parse(saved);
+          fields.forEach(id => {
+            const el = document.getElementById(id);
+            if (el && data[id] !== undefined) el.value = data[id];
+          });
+        }
+      } catch (e) {}
+
+      const dateInput = document.getElementById('meta_date');
+      if (dateInput && !dateInput.value) {
+        dateInput.value = new Date().toISOString().split('T')[0];
+      }
+    }
+
+    fields.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener('input', saveCanvas);
+        el.addEventListener('change', saveCanvas);
+      }
+    });
+
+    // Toggle tips
+    let guidesVisible = true;
+    document.getElementById('toggleGuidesBtn').addEventListener('click', () => {
+      guidesVisible = !guidesVisible;
+      document.querySelectorAll('.guide-tip').forEach(el => {
+        el.style.display = guidesVisible ? 'block' : 'none';
+      });
+      document.getElementById('guideToggleText').innerText = guidesVisible ? 'Hide Tips' : 'Show Tips';
+    });
+
+    // Clear entries
+    document.getElementById('clearBtn').addEventListener('click', () => {
+      fields.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+      try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+      document.getElementById('saveStatus').innerText = 'Canvas Cleared';
+    });
+
+    // Load rich sample
+    document.getElementById('loadSampleBtn').addEventListener('click', () => {
+      const sample = {
+        meta_persona_name: 'Overloaded RevOps Leader ("Scaling Sam")',
+        meta_product_tier: 'Enterprise Automation Engine',
+        meta_market_archetype: 'Series B to D B2B Tech (100–500 FTEs)',
+        meta_owner: 'Marketing & Sales Strategy Team',
+        meta_status: 'Customer Validating',
+        meta_date: new Date().toISOString().split('T')[0],
+        cell_demographics: '• Age: 33–47\n• Geography: US/CA Metros / Remote\n• Income: $135k – $185k base + equity\n• Education: BS in Business, MIS, or CS',
+        cell_prof_background: '• Titles: Director of RevOps, VP of Operations\n• Background: 5–10 yrs in CRM & data architecture\n• Team: Leads 2–4 specialists; reports to CRO',
+        cell_resp_tech: '• KPIs: Pipeline predictability, tool rationalization\n• Tech Fluency: 4.8 / 5.0 (Comfortable with APIs, SQL)\n• Stack: Salesforce, HubSpot, Slack, Notion, Snowflake',
+        cell_linkedin_keywords: '"GTM Systems Architect", "Revenue Operations", "Salesforce Certified", "Pipeline Optimization", "Data Governance"',
+        cell_values_mindset: '• Values: Deterministic data, operational calm, transparency\n• Mindset: Skeptical of vendor hype; demands sandbox proof\n• Risk Appetite: Calculated pilot tester',
+        cell_pain_points: '• Wastes 12 hrs/wk stitching broken CSV exports\n• Sales reps complain lead attribution is inaccurate\n• Fear: Board-level forecast misses causing turnover',
+        cell_goals: '• Automated bidirectional sync between product and CRM\n• Reduce manual data cleaning requests by 75%\n• Elevate RevOps from "ticket desk" to strategy partner',
+        cell_in_their_words: '"I feel like a glorified human pipeline just copying spreadsheets all day."\n\n"Every tool promises 2-click setup, then takes 4 months to configure."',
+        cell_messaging: '• Tone: Direct, engineer-level precision, peer-to-peer\n• Value Hook: "Unify CRM and product data in 20 minutes—zero SQL or IT tickets."\n• Resonant: Deterministic, automated SLAs, audit-proof\n• Taboo: Magic, synergistic, all-in-one silver bullet',
+        cell_buying_behavior: '• Triggers: New CRO hire, failed quarterly forecast, 90-day contract renewal\n• Objections: "Will this slow down our CRM?", "Is pricing transparent?"\n• Rubric: 1. Native API integration  2. SOC2  3. Self-serve speed',
+        cell_user_journey: '1. Discovery: Slack peer recommendation or LinkedIn teardown\n2. Research: G2 reviews, transparent pricing check\n3. Proof-of-Concept: Spins up free developer sandbox\n4. Expand: Adds 3 teammates within 14 days',
+        cell_platform_behavior: '• Daily: LinkedIn, Slack (RevOps Co-op), Claude & Perplexity\n• Occasional: YouTube teardowns, Reddit (r/revops)\n• Zero Presence: TikTok, Facebook, Instagram',
+        cell_search_behavior: '• Queries: "How to automate lead deduplication in Salesforce", "HubSpot to Postgres sync without ETL"\n• AI Prompts: "Draft a comparison matrix for data synchronization tools focusing on SOC2 compliance"',
+        cell_media_habits: '• Podcasts: Lenny\'s Podcast, The RevOps Review, 20VC\n• Newsletters: Stratechery, TLDR Tech\n• Communities: RevOps Co-op, Pavilion, Modern Sales Pros',
+        cell_brands_content: '• Admired: Stripe, Linear, Apple, Datadog\n• Preferred Content: Interactive ROI calculators, architectural flowcharts\n• Avoids: 50-page generic gated whitepapers',
+        cell_how_to_reach: '• Play 1: Competitor alternative comparison pages with interactive sync latency calculator.\n• Play 2: Sponsor RevOps newsletter with an ungated pipeline audit template.\n• Play 3: Weekly LinkedIn video breakdowns of real-world integration disasters.',
+        cell_exec_snapshot: '"If we prove our platform eliminates their weekend spreadsheet reconciliation with zero IT tickets, we close them in under 21 days."'
+      };
+      Object.entries(sample).forEach(([key, val]) => {
+        const el = document.getElementById(key);
+        if (el) el.value = val;
+      });
+      saveCanvas();
+    });
+
+    // Markdown Export
+    document.getElementById('exportMdBtn').addEventListener('click', () => {
+      const g = id => (document.getElementById(id) ? document.getElementById(id).value : '');
+      const md = `# Ideal Customer Profile: ${g('meta_persona_name') || 'Untitled Persona'}
+
+**Target Offering / Tier:** ${g('meta_product_tier')}  
+**Target Market Archetype:** ${g('meta_market_archetype')}  
+**Owner(s):** ${g('meta_owner')}  
+**Validation Status:** ${g('meta_status')}  
+**Date:** ${g('meta_date')}  
+
+---
+
+## 1. Demographics
+${g('cell_demographics')}
+
+## 2. Professional Background
+${g('cell_prof_background')}
+
+## 3. Responsibilities & Stack
+${g('cell_resp_tech')}
+
+## 4. LinkedIn Bio Keywords
+${g('cell_linkedin_keywords')}
+
+## 5. Values and Mindset
+${g('cell_values_mindset')}
+
+## 6. Pain Points & Friction
+${g('cell_pain_points')}
+
+## 7. Goals & Desired State
+${g('cell_goals')}
+
+## 8. In Their Words (Voice of Customer)
+${g('cell_in_their_words')}
+
+## 9. Messaging & Resonance Strategy
+${g('cell_messaging')}
+
+## 10. Buying Behavior
+${g('cell_buying_behavior')}
+
+## 11. Common User Journey
+${g('cell_user_journey')}
+
+## 12. Platform Behavior
+${g('cell_platform_behavior')}
+
+## 13. Search & AI Prompts
+${g('cell_search_behavior')}
+
+## 14. Media Habits
+${g('cell_media_habits')}
+
+## 15. Brands & Content Formats
+${g('cell_brands_content')}
+
+## 16. How to Reach (Activation Blueprint)
+${g('cell_how_to_reach')}
+
+---
+
+### Executive Alignment Snapshot
+${g('cell_exec_snapshot')}
+`;
+
+      const blob = new Blob([md], { type: 'text/markdown;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${(g('meta_persona_name') || 'ICP_Canvas').replace(/[^a-z0-9]/gi, '_').toLowerCase()}.md`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    // Auto-scale on initial load
+    window.addEventListener('DOMContentLoaded', () => {
+      loadCanvas();
+      setTimeout(fitToWidth, 100);
+    });
+  </script>
+</body>
+</html>
